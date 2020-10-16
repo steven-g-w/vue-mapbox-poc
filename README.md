@@ -26,6 +26,6 @@ npm run lint
 ```
 
 ### Customize configuration
-[Mapbox GL JS Style Specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
-[Mapbox GL JS API](https://docs.mapbox.com/mapbox-gl-js/api/)
-[Vue Mapbox Guide](https://soal.github.io/vue-mapbox/guide/)
+- [Mapbox GL JS Style Specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
+- [Mapbox GL JS API](https://docs.mapbox.com/mapbox-gl-js/api/)
+- [Vue Mapbox Guide](https://soal.github.io/vue-mapbox/guide/)
