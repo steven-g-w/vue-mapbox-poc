@@ -4,7 +4,7 @@
 ```
 npm install
 ```
-You should create your own mapbox key/map in mapbox studio and replace the values in `HelloWorld.vue`:
+You should [create your own mapbox key/map in mapbox](https://account.mapbox.com/auth/signup/) and replace the values in `HelloWorld.vue`:
 ```
 accessToken: "ask-ryan-for-token-or-use-your-own", // your access token. Needed if you using Mapbox maps
 mapStyle: "mapbox://ask-ryan-for-style-or-use-your-own", // your map style
