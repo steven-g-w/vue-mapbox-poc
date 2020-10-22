@@ -125,8 +125,8 @@ export default {
   data() {
     return {
       accessToken:
-        "ask-ryan-for-token-or-use-your-own", // your access token. Needed if you using Mapbox maps
-      mapStyle: "mapbox://ask-ryan-for-style-or-use-your-own", // your map style
+        "pk.eyJ1IjoicnlhbmhlcmJlcnQiLCJhIjoiY2tlbndteDY0MGwzdTJ6c2F0OTc5cXlmNSJ9.LqDw6TblusSYBn475iGLMw", // your access token. Needed if you using Mapbox maps
+      mapStyle: "mapbox://styles/ryanherbert/ckfnsmg3i0wsj19nx1nmc7ilt", // your map style
       showingHoverMarker: null,
       geoJsonSource: {
         type: "geojson",
@@ -157,9 +157,9 @@ export default {
         source: "geojson-source",
         filter: ["!", ["has", "point_count"]],
         layout: {
-          "icon-image": "white",
+          "icon-image": "orange_chip_with_shadow",
           "icon-text-fit": "both",
-          "icon-text-fit-padding": [1, 5, 1, 5],
+          "icon-text-fit-padding": [3, 33, 8, 30],
           "text-anchor": "bottom",
           "text-field": "{title}",
           "text-font": ["Open Sans Bold"],
@@ -171,9 +171,6 @@ export default {
         },
         paint: {
           "text-color": "#ffffff",
-          "text-halo-width": 1,
-          "text-halo-blur": 0,
-          "text-halo-color": "#846cff",
         },
       },
       geojsonClusterLayer: {
@@ -226,9 +223,13 @@ export default {
       this.map = event.map;
       this.map.center = [153.04, -27.47];
 
-      this.map.loadImage("/white.png", (error, image) => {
+      this.map.loadImage("/orange_chip_icon_with_shadow.png", (error, image) => {
         if (error) throw error;
-        this.map.addImage("white", image);
+        this.map.addImage("orange_chip_with_shadow", image, {
+          content: [0, 0, 57, 29],
+          stretchX: [[28, 30]],
+          stretchY: [[12, 14]],
+        });
       });
     },
     stelliteOn() {
