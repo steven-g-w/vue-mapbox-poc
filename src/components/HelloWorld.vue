@@ -7,6 +7,10 @@
     <button v-on:click="EaseToBrisbane">EaseToBrisbane</button>
     <button v-on:click="JumpToBrisbane">JumpToBrisbane</button>
     <button v-on:click="JumpToDC">JumpToDC</button>
+    <button @click="updateMarkerData">Update Marker Data</button>
+    <!-- :center="[-77.0628101291, 38.8846868585]" -->
+    <!-- :zoom="13" -->
+
     <MglMap
       :accessToken="accessToken"
       :mapStyle="mapStyle"
@@ -25,14 +29,14 @@
         :layer="geojsonHeatmapLayer"
       /> -->
 
-      <MglGeojsonLayer
+      <!-- <MglGeojsonLayer
         :sourceId="'geojson-source'"
         :source="geoJsonSource"
         layerId="circle"
         :layer="geojsonPrettierCircleLayer"
         @mouseenter="showCircleDetail"
         @click="circleClick"
-      />
+      /> -->
 
       <MglGeojsonLayer
         :sourceId="'geojson-source'"
@@ -59,6 +63,20 @@
         @click="clusterClick"
       />
 
+      <MglMarker
+        v-for="(m, index) in markers"
+        :key="index"
+        :coordinates="m.geometry.coordinates"
+        @click="() => markerClicked(m)"
+      >
+        <div slot="marker">
+          <div class="marker">
+            <h1 :style="`background-color: ${m.properties.color || 'white'}`">
+              <!-- {{ m.properties.description }} -->
+            </h1>
+          </div>
+        </div>
+      </MglMarker>
       <MglMarker
         :coordinates="[153.03, -27.46]"
         @mouseenter="
@@ -124,9 +142,10 @@ export default {
   props: {},
   data() {
     return {
+      markers: [],
       accessToken:
-        "ask-ryan-for-token-or-use-your-own", // your access token. Needed if you using Mapbox maps
-      mapStyle: "mapbox://ask-ryan-for-style-or-use-your-own", // your map style
+        "pk.eyJ1IjoidG9ueS13b25nLWF1cml6b24iLCJhIjoiY2tnaWhxb2VoMDZneDMxcGR5ZmNmaHVtayJ9.ZkvcS3ihI98gUa-AQ4UeeQ", // your access token. Needed if you using Mapbox maps
+      mapStyle: "mapbox://styles/tony-wong-aurizon/ckgij4stc06ln1amvev3cvmhb", // your map style
       showingHoverMarker: null,
       geoJsonSource: {
         type: "geojson",
@@ -170,7 +189,7 @@ export default {
           "text-offset": [0, -1.3],
         },
         paint: {
-          "text-color": "#ffffff",
+          // "circle-radius": 0,
           "text-halo-width": 1,
           "text-halo-blur": 0,
           "text-halo-color": "#846cff",
@@ -219,6 +238,15 @@ export default {
     // We need to set mapbox-gl library here in order to use it in template
     this.mapbox = Mapbox;
   },
+  watch: {
+    map: {
+      deep: true,
+      handle() {
+        console.log("map change");
+        this.updateMarkers("map change");
+      },
+    },
+  },
   methods: {
     onMapLoaded(event) {
       // in component
@@ -229,6 +257,36 @@ export default {
       this.map.loadImage("/white.png", (error, image) => {
         if (error) throw error;
         this.map.addImage("white", image);
+      });
+
+      this.map.on("moveend", () => this.updateMarkers("moveend"));
+      this.updateMarkers("load");
+    },
+    markerClicked(m) {
+      m.properties.color = "green";
+    },
+    updateMarkers(a) {
+      console.log(a);
+
+      this.markers = [];
+
+      // wait for the map to load.
+
+      const features = this.map.querySourceFeatures("geojson-source");
+
+      console.log(features);
+
+      features.forEach((f) => {
+        if (!f.properties.cluster) {
+          this.markers.push(f);
+        }
+      });
+    },
+    updateMarkerData() {
+      this.updateMarkers();
+      this.markers = this.markers.filter((m, index) => {
+        m.properties.color = "red";
+        return index % 2;
       });
     },
     stelliteOn() {
@@ -264,7 +322,7 @@ export default {
       this.map.jumpTo({ center: [153.03, -27.47], zoom: 13 });
     },
     JumpToDC() {
-      this.map.jumpTo({ center: [-77.0628101291, 38.8846868585], zoom: 13 });
+      this.map.easeTo({ center: [-77.0628101291, 38.8846868585], zoom: 13 });
     },
     clusterClick(event) {
       const e = event.mapboxEvent;
@@ -306,5 +364,34 @@ a {
 }
 .mapboxgl-popup-content {
   background-color: yellow;
+}
+</style>
+<style>
+.marker {
+  background: white;
+  border-radius: 50%;
+  margin: 10px;
+  height: 20px;
+  width: 20px;
+
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 1);
+  transform: scale(1);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
 }
 </style>
