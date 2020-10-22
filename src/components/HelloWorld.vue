@@ -143,9 +143,8 @@ export default {
   data() {
     return {
       markers: [],
-      accessToken:
-        "pk.eyJ1IjoidG9ueS13b25nLWF1cml6b24iLCJhIjoiY2tnaWhxb2VoMDZneDMxcGR5ZmNmaHVtayJ9.ZkvcS3ihI98gUa-AQ4UeeQ", // your access token. Needed if you using Mapbox maps
-      mapStyle: "mapbox://styles/tony-wong-aurizon/ckgij4stc06ln1amvev3cvmhb", // your map style
+      accessToken: "", // your access token. Needed if you using Mapbox maps
+      mapStyle: "", // your map style
       showingHoverMarker: null,
       geoJsonSource: {
         type: "geojson",
