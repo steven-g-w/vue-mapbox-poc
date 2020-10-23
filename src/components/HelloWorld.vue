@@ -115,6 +115,8 @@
 </template>
 
 <script>
+import { debounce } from "vue-debounce";
+
 import Mapbox from "mapbox-gl";
 import {
   MglMap,
@@ -142,9 +144,11 @@ export default {
   props: {},
   data() {
     return {
+      debouncedOnRender: null,
       markers: [],
-      accessToken: "", // your access token. Needed if you using Mapbox maps
-      mapStyle: "", // your map style
+      accessToken:
+        "pk.eyJ1IjoidG9ueS13b25nLWF1cml6b24iLCJhIjoiY2tnaWhxb2VoMDZneDMxcGR5ZmNmaHVtayJ9.ZkvcS3ihI98gUa-AQ4UeeQ", // your access token. Needed if you using Mapbox maps
+      mapStyle: "mapbox://styles/tony-wong-aurizon/ckgij4stc06ln1amvev3cvmhb", // your map style
       showingHoverMarker: null,
       geoJsonSource: {
         type: "geojson",
@@ -236,6 +240,11 @@ export default {
   created() {
     // We need to set mapbox-gl library here in order to use it in template
     this.mapbox = Mapbox;
+    this.debouncedOnRender = debounce(() => {
+      console.log("debounced render");
+      this.updateMarkers("debounce");
+      // this.map.off("render", this.debouncedOnRender);
+    }, 100);
   },
   watch: {
     map: {
@@ -258,8 +267,9 @@ export default {
         this.map.addImage("white", image);
       });
 
-      this.map.on("moveend", () => this.updateMarkers("moveend"));
-      this.updateMarkers("load");
+      // this.map.on("moveend", () => this.updateMarkers("moveend"));
+      // this.updateMarkers("load");
+      this.map.on("render", this.debouncedOnRender);
     },
     markerClicked(m) {
       m.properties.color = "green";
@@ -321,7 +331,7 @@ export default {
       this.map.jumpTo({ center: [153.03, -27.47], zoom: 13 });
     },
     JumpToDC() {
-      this.map.easeTo({ center: [-77.0628101291, 38.8846868585], zoom: 13 });
+      this.map.jumpTo({ center: [-77.0628101291, 38.8846868585], zoom: 13 });
     },
     clusterClick(event) {
       const e = event.mapboxEvent;
@@ -376,6 +386,10 @@ a {
   box-shadow: 0 0 0 0 rgba(255, 255, 255, 1);
   transform: scale(1);
   animation: pulse 2s infinite;
+}
+
+.marker:hover {
+  background: green;
 }
 @keyframes pulse {
   0% {
