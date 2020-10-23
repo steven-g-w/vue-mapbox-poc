@@ -1,13 +1,14 @@
 <template>
   <div class="hello">
     <h1>POC Map</h1>
-    <button v-on:click="stelliteOn">stelliteOn</button>
-    <button v-on:click="stelliteOff">stelliteOff</button>
-    <button v-on:click="FlyToBrisbane">FlyToBrisbane</button>
-    <button v-on:click="EaseToBrisbane">EaseToBrisbane</button>
-    <button v-on:click="JumpToBrisbane">JumpToBrisbane</button>
-    <button v-on:click="JumpToDC">JumpToDC</button>
-    <button @click="updateMarkerData">Update Marker Data</button>
+    <v-btn v-on:click="stelliteOn">stelliteOn</v-btn>
+    <v-btn v-on:click="stelliteOff">stelliteOff</v-btn>
+    <v-btn v-on:click="FlyToBrisbane">FlyToBrisbane</v-btn>
+    <v-btn v-on:click="EaseToBrisbane">EaseToBrisbane</v-btn>
+    <v-btn v-on:click="JumpToBrisbane">JumpToBrisbane</v-btn>
+    <v-btn v-on:click="JumpToDC">JumpToDC</v-btn>
+    <v-btn @click="updateMarkerData">Update Marker Data</v-btn>
+
     <!-- :center="[-77.0628101291, 38.8846868585]" -->
     <!-- :zoom="13" -->
 
@@ -17,6 +18,10 @@
       @load="onMapLoaded"
       @click="hideHoverMarker"
     >
+      <div style="width: 400px; padding-top: 20px; padding-left: 20px">
+        <v-select :items="items" solo label="Filled styles" :menu-props="{ offsetY: true }"></v-select>
+      </div>
+
       <MglNavigationControl position="top-right" />
       <MglGeolocateControl position="top-right" />
       <MglScaleControl position="bottom-right" />
@@ -144,6 +149,7 @@ export default {
   props: {},
   data() {
     return {
+      items: ["Food", "Bar", "Fizz", "Buzz"],
       debouncedOnRender: null,
       markers: [],
       accessToken:
