@@ -8,19 +8,22 @@
     <button v-on:click="JumpToBrisbane">JumpToBrisbane</button>
     <button v-on:click="JumpToDC">JumpToDC</button>
     <button @click="updateMarkerData">Update Marker Data</button>
+    <button @click="zoomIn">ZoomIn</button>
+    <button @click="zoomOut">ZoomOut</button>
+    <button @click="recentre" v-if="selectedMarker">Recentre</button>
     <!-- :center="[-77.0628101291, 38.8846868585]" -->
     <!-- :zoom="13" -->
 
-    <MglMap
-      :accessToken="accessToken"
-      :mapStyle="mapStyle"
-      @load="onMapLoaded"
-      @click="hideHoverMarker"
-    >
-      <MglNavigationControl position="top-right" />
-      <MglGeolocateControl position="top-right" />
-      <MglScaleControl position="bottom-right" />
-      <MglAttributionControl position="bottom-right" />
+    <!-- <control :map="map" /> -->
+
+    <control @zoomIn="zoomIn" @zoomOut="zoomOut" />
+
+    <MglMap :accessToken="accessToken" :mapStyle="mapStyle" @load="onMapLoaded">
+      <!-- @click="hideHoverMarker" -->
+      <!-- <MglNavigationControl position="top-right" /> -->
+      <!-- <MglGeolocateControl position="top-right" /> -->
+      <!-- <MglScaleControl position="bottom-right" /> -->
+      <!-- <MglAttributionControl position="bottom-right" /> -->
 
       <!-- <MglGeojsonLayer
         :sourceId="'geojson-source'"
@@ -45,7 +48,7 @@
         :layer="geojsonTextLayer"
       />
 
-      <MglGeojsonLayer
+      <!-- <MglGeojsonLayer
         :sourceId="'geojson-source'"
         :source="geoJsonSource"
         layerId="clusters"
@@ -61,11 +64,11 @@
         layerId="clustersCount"
         :layer="geojsonClusterCountLayer"
         @click="clusterClick"
-      />
+      /> -->
 
       <MglMarker
         v-for="(m, index) in markers"
-        :key="index"
+        :key="`marker-${index}`"
         :coordinates="m.geometry.coordinates"
         @click="() => markerClicked(m)"
       >
@@ -77,38 +80,21 @@
           </div>
         </div>
       </MglMarker>
-      <MglMarker
-        :coordinates="[153.03, -27.46]"
-        @mouseenter="
-          showHoverMarker({ content: 'ABC', coordinates: [153.03, -27.46] })
-        "
-      >
-        <h1 style="background-color: white" slot="marker">html marker ABC</h1>
-        <MglPopup>
-          <div>Hello, I'm popup!</div>
-        </MglPopup>
-      </MglMarker>
 
       <MglMarker
-        :coordinates="[153.04, -27.47]"
-        @mouseenter="
-          showHoverMarker({ content: 'EFG', coordinates: [153.04, -27.47] })
-        "
+        v-for="(c, index) in clusters"
+        :key="`cluster-${index}`"
+        :coordinates="c.geometry.coordinates"
+        @click="clusterClick(c.geometry.coordinates)"
       >
-        <h1 style="background-color: white" slot="marker">html marker EFG</h1>
-        <MglPopup>
-          <div>Hello, I'm popup!</div>
-        </MglPopup>
-      </MglMarker>
-
-      <MglMarker
-        v-if="showingHoverMarker"
-        :coordinates="showingHoverMarker.coordinates"
-        :offset="[20, -15]"
-      >
-        <h1 style="background-color: yellow" slot="marker">
-          {{ this.showingHoverMarker.content }}
-        </h1>
+        <div slot="marker">
+          <div
+            class="cluster"
+            :class="getClusterSize(c.properties.point_count)"
+          >
+            {{ c.properties.point_count }}
+          </div>
+        </div>
       </MglMarker>
     </MglMap>
   </div>
@@ -120,12 +106,11 @@ import { debounce } from "vue-debounce";
 import Mapbox from "mapbox-gl";
 import {
   MglMap,
-  MglAttributionControl,
-  MglGeolocateControl,
-  MglNavigationControl,
-  MglScaleControl,
+  // MglAttributionControl,
+  // MglGeolocateControl,
+  // MglNavigationControl,
+  // MglScaleControl,
   MglMarker,
-  MglPopup,
   MglGeojsonLayer,
 } from "vue-mapbox";
 
@@ -133,22 +118,24 @@ export default {
   name: "HelloWorld",
   components: {
     MglMap,
-    MglAttributionControl,
-    MglGeolocateControl,
-    MglNavigationControl,
-    MglScaleControl,
+    // MglAttributionControl,
+    // MglGeolocateControl,
+    // MglNavigationControl,
+    // MglScaleControl,
     MglMarker,
-    MglPopup,
+    // MglPopup,
     MglGeojsonLayer,
   },
   props: {},
   data() {
     return {
+      selectedMarker: null,
       debouncedOnRender: null,
       markers: [],
+      clusters: [],
       accessToken:
-        "pk.eyJ1IjoidG9ueS13b25nLWF1cml6b24iLCJhIjoiY2tnaWhxb2VoMDZneDMxcGR5ZmNmaHVtayJ9.ZkvcS3ihI98gUa-AQ4UeeQ", // your access token. Needed if you using Mapbox maps
-      mapStyle: "mapbox://styles/tony-wong-aurizon/ckgij4stc06ln1amvev3cvmhb", // your map style
+        "pk.eyJ1IjoiYXVyaXpvbnZpc3RhIiwiYSI6ImNrZ2lna3N2dTA2Z2gydnBpcXEwYzc3ajEifQ.MGvyiee8BAH7FlEu0wbNFQ", // your access token. Needed if you using Mapbox maps
+      mapStyle: "mapbox://styles/aurizonvista/ckgk62c4d09sy19qtdtv2m7uk", // your map style
       showingHoverMarker: null,
       geoJsonSource: {
         type: "geojson",
@@ -177,20 +164,7 @@ export default {
       geojsonTextLayer: {
         type: "symbol",
         source: "geojson-source",
-        filter: ["!", ["has", "point_count"]],
-        layout: {
-          "icon-image": "white",
-          "icon-text-fit": "both",
-          "icon-text-fit-padding": [1, 5, 1, 5],
-          "text-anchor": "bottom",
-          "text-field": "{title}",
-          "text-font": ["Open Sans Bold"],
-          "text-justify": "center",
-          "text-size": 15,
-          "text-allow-overlap": false,
-          "text-letter-spacing": 0.05,
-          "text-offset": [0, -1.3],
-        },
+        layout: {},
         paint: {
           // "circle-radius": 0,
           "text-halo-width": 1,
@@ -241,19 +215,8 @@ export default {
     // We need to set mapbox-gl library here in order to use it in template
     this.mapbox = Mapbox;
     this.debouncedOnRender = debounce(() => {
-      console.log("debounced render");
       this.updateMarkers("debounce");
-      // this.map.off("render", this.debouncedOnRender);
-    }, 100);
-  },
-  watch: {
-    map: {
-      deep: true,
-      handle() {
-        console.log("map change");
-        this.updateMarkers("map change");
-      },
-    },
+    }, 60); // 60 is a nice balance between number of renders and response time
   },
   methods: {
     onMapLoaded(event) {
@@ -262,32 +225,46 @@ export default {
       this.map = event.map;
       this.map.center = [153.04, -27.47];
 
-      this.map.loadImage("/white.png", (error, image) => {
-        if (error) throw error;
-        this.map.addImage("white", image);
-      });
+      // this.map.loadImage("/white.png", (error, image) => {
+      //   if (error) throw error;
+      //   this.map.addImage("white", image);
+      // });
 
       // this.map.on("moveend", () => this.updateMarkers("moveend"));
       // this.updateMarkers("load");
       this.map.on("render", this.debouncedOnRender);
     },
-    markerClicked(m) {
-      m.properties.color = "green";
+    getClusterSize(point_count) {
+      if (point_count > 6) {
+        return "large";
+      }
+      if (point_count > 3) {
+        return "medium";
+      }
+      return "small";
     },
-    updateMarkers(a) {
-      console.log(a);
+    recentre() {
+      this.map.easeTo({ center: this.selectedMarker.geometry.coordinates });
+    },
+    markerClicked(m) {
+      this.selectedMarker = m;
+    },
+    updateMarkers() {
+      console.log("...updating markers");
 
       this.markers = [];
+      this.clusters = [];
 
       // wait for the map to load.
 
       const features = this.map.querySourceFeatures("geojson-source");
 
-      console.log(features);
-
       features.forEach((f) => {
+        if (f.properties.cluster) {
+          return this.clusters.push(f);
+        }
         if (!f.properties.cluster) {
-          this.markers.push(f);
+          return this.markers.push(f);
         }
       });
     },
@@ -333,11 +310,9 @@ export default {
     JumpToDC() {
       this.map.jumpTo({ center: [-77.0628101291, 38.8846868585], zoom: 13 });
     },
-    clusterClick(event) {
-      const e = event.mapboxEvent;
+    clusterClick(lngLat) {
       const zoom = this.map.getZoom();
-      console.log(e.lngLat, zoom);
-      this.map.easeTo({ center: e.lngLat, zoom: zoom + 1 });
+      this.map.easeTo({ center: lngLat, zoom: zoom + 1 });
     },
     circleClick(event) {
       console.log(event);
@@ -347,6 +322,14 @@ export default {
     },
     onMouseLeave() {
       this.map.getCanvas().style.cursor = "";
+    },
+    zoomIn() {
+      const zoom = this.map.getZoom();
+      this.map.easeTo({ zoom: zoom + 1 });
+    },
+    zoomOut() {
+      const zoom = this.map.getZoom();
+      this.map.easeTo({ zoom: zoom - 1 });
     },
   },
 };
@@ -375,7 +358,32 @@ a {
   background-color: yellow;
 }
 </style>
-<style>
+<style scoped>
+.cluster {
+  background: red;
+  border-radius: 50%;
+  margin: 10px;
+  height: 30px;
+  width: 30px;
+  color: #fff;
+  box-shadow: 0 0 0 0 rgba(255, 255, 255, 1);
+  transform: scale(1);
+  animation: pulse 2s infinite;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cluster.large {
+  height: 50px;
+  width: 50px;
+}
+
+.cluster.medium {
+  height: 40px;
+  width: 40px;
+}
+
 .marker {
   background: white;
   border-radius: 50%;
